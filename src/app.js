@@ -1,35 +1,22 @@
 
 var HelloWorldLayer = cc.Layer.extend({
-    sprite:null,
     ctor:function () {
-        //////////////////////////////
-        // 1. super init first
         this._super();
 
-        /////////////////////////////
-        // 2. add a menu item with "X" image, which is clicked to quit the program
-        //    you may modify it.
-        // ask the window size
-        var size = cc.winSize;
+        var bg = new cc.LayerColor(cc.color(100,100,100), 200, 200);
+        bg.x = 100;
+        bg.y = 100;
+        this.addChild(bg, 1);
 
-        /////////////////////////////
-        // 3. add your codes below...
-        // add a label shows "Hello World"
-        // create and initialize a label
-        var helloLabel = new cc.LabelTTF("Hello World", "Arial", 38);
-        // position the label on the center of the screen
-        helloLabel.x = size.width / 2;
-        helloLabel.y = size.height / 2 + 200;
-        // add the label as a child to this layer
-        this.addChild(helloLabel, 5);
+        var ball1 = new cc.Sprite("res/item_2.png");
+        ball1.x = 100;
+        ball1.y = 300;
+        this.addChild(ball1, 2);
 
-        // add "HelloWorld" splash screen"
-        this.sprite = new cc.Sprite(res.HelloWorld_png);
-        this.sprite.attr({
-            x: size.width / 2,
-            y: size.height / 2
-        });
-        this.addChild(this.sprite, 0);
+        var ball2 = new cc.Sprite("res/item_3.png");
+        ball2.x = 100;
+        ball2.y = 100;
+        bg.addChild(ball2, 1);
 
         return true;
     }
@@ -38,8 +25,26 @@ var HelloWorldLayer = cc.Layer.extend({
 var HelloWorldScene = cc.Scene.extend({
     onEnter:function () {
         this._super();
+
         var layer = new HelloWorldLayer();
+        this.addChild(layer);
+
+        setTimeout(function(){
+//            cc.director.runScene(new SecondScene());
+            cc.director.runScene(new cc.TransitionSplitCols(2, new SecondScene()));
+        }, 3000);
+    }
+});
+
+var SecondScene = cc.Scene.extend({
+
+    onEnter: function () {
+        this._super();
+
+        var layer = new cc.LayerGradient(cc.color(255,0,0),cc.color(0,0,255));
         this.addChild(layer);
     }
 });
+
+
 
