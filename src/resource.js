@@ -1,4 +1,5 @@
 
 var g_resources = [
-    "res/bg.jpg"
+    "res/grossini.png",
+    "res/mask.png"
 ];
