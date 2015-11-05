@@ -2,255 +2,216 @@ function trace(){
     cc.log(Array.prototype.join.call(arguments, ", "));
 }
 
-var MenuItemSpriteLayer = cc.Layer.extend({
+var GameLayer = cc.Layer.extend({
+
+    mapPanel:null,
+    ui:null,
+
+    score:0,
+    level:0,
+    steps:0,
+    limitStep:0,
+    targetScore:0,
+    map:null,
+
+    /**
+     * 糖果还在移动，不接受再次点击
+     */
+    moving:false,
 
     ctor: function () {
         this._super();
 
-        var spriteNormal = new cc.Sprite("res/startgame.png");
-        var spriteSelected = new cc.Sprite("res/startgame2.png");
-        var spriteDisable = new cc.Sprite("res/startgame3.png");
-//        var menuSprite = new cc.MenuItemSprite(spriteNormal, spriteSelected, spriteDisable, this.startGame.bind(this));
-        var menuSprite = new cc.MenuItemSprite(spriteNormal, spriteSelected, spriteDisable, this.startGame);
-        var menu = new cc.Menu(menuSprite);
-        this.addChild(menu);
-        menuSprite.setEnabled(false);
-    },
+        var size = cc.winSize;
 
-    startGame: function () {
-        trace("this is MenuItemSpriteLayer?", this instanceof MenuItemSpriteLayer);
-    }
-});
+        var bg = new cc.Sprite("res/bg.jpg");
+        this.addChild(bg, 1);
+        bg.x = size.width/2;
+        bg.y = size.height/2;
 
-var MenuItemImageLayer = cc.Layer.extend({
+        var clippingPanel = new cc.ClippingNode();
+        this.addChild(clippingPanel, 2);
+        this.mapPanel = new cc.Layer();
+        this.mapPanel.x = (size.width - Constant.CANDY_WIDTH*Constant.MAP_SIZE)/2;
+        this.mapPanel.y = (size.height - Constant.CANDY_WIDTH*Constant.MAP_SIZE)/2;
+        clippingPanel.addChild(this.mapPanel, 1);
 
-    ctor: function () {
-        this._super();
+        var stencil = new cc.DrawNode();
+        stencil.drawRect(cc.p(this.mapPanel.x,this.mapPanel.y), cc.p(this.mapPanel.x+Constant.CANDY_WIDTH*Constant.MAP_SIZE,this.mapPanel.y+Constant.CANDY_WIDTH*Constant.MAP_SIZE),
+            cc.color(0,0,0), 1, cc.color(0,0,0));
+        clippingPanel.stencil = stencil;
 
-        var menuImage = new cc.MenuItemImage("res/startgame.png", "res/startgame2.png", "res/startgame3.png", this.startGame, this);
-        var menu = new cc.Menu(menuImage);
-        this.addChild(menu);
-    },
-
-    startGame: function () {
-        trace("menuImage clicked");
-    }
-});
-
-var MenuItemFontLayer = cc.Layer.extend({
-
-    ctor: function () {
-        this._super();
-
-        var menuFont = new cc.MenuItemFont("START GAME", this.startGame, this);
-        menuFont.fontSize = 32;
-        menuFont.fontName = "Arial";
-        var menu = new cc.Menu(menuFont);
-        this.addChild(menu);
-    },
-
-    startGame: function () {
-        trace("start game button clicked");
-    }
-});
-
-var MenuItemLabelLayer = cc.Layer.extend({
-
-    ctor: function () {
-        this._super();
-
-//        var label = new cc.LabelTTF("START GAME", "Arial", 32);
-//        var item = new cc.MenuItemLabel(label, this.startGame, this);
-
-        var label = new cc.LabelBMFont("START GAME", "res/font.fnt");
-        var item = new cc.MenuItemLabel(label, this.startGame, this);
-
-        var menu = new cc.Menu(item);
-        this.addChild(menu);
-    },
-
-    startGame: function () {
-        trace("start game button clicked");
-    }
-});
-
-var MenuItemToggleLayer = cc.Layer.extend({
-
-    ctor: function () {
-        this._super();
-
-        cc.MenuItemFont.setFontName("Arial");
-        cc.MenuItemFont.setFontSize(32);
-        var on = new cc.MenuItemFont("ON");
-        var off = new cc.MenuItemFont("OFF");
-        var item = new cc.MenuItemToggle(off, on, this.toggleMusic, this);
-
-        var menu = new cc.Menu(item);
-        this.addChild(menu);
-    },
-
-    toggleMusic: function () {
-        if(this.musicOff){
-            trace("music on");
-            this.musicOff = false;
-        }else{
-            trace("music off");
-            this.musicOff = true;
-        }
-    }
-});
-
-
-var MenuItemToggleLayer2 = cc.Layer.extend({
-
-    ctor: function () {
-        this._super();
-
-        cc.MenuItemFont.setFontName("Arial");
-        cc.MenuItemFont.setFontSize(32);
-        var easy = new cc.MenuItemFont("EASY");
-        var normal = new cc.MenuItemFont("NORMAL");
-        var hard = new cc.MenuItemFont("HARD");
-        var item = new cc.MenuItemToggle(easy, normal, hard, this.changeMode, this);
-
-        var menu = new cc.Menu(item);
-        this.addChild(menu);
-    },
-
-    changeMode: function () {
-    }
-});
-
-var MenuLayer = cc.Layer.extend({
-
-    ctor: function () {
-        this._super();
-
-        cc.MenuItemFont.setFontName("Arial");
-        cc.MenuItemFont.setFontSize(24);
-        var one = new cc.MenuItemFont("one", this.clickHandler);
-        var two = new cc.MenuItemFont("two", this.clickHandler);
-        var three = new cc.MenuItemFont("three", this.clickHandler);
-        var four = new cc.MenuItemFont("four", this.clickHandler);
-        var five = new cc.MenuItemFont("five", this.clickHandler);
-        var six = new cc.MenuItemFont("six", this.clickHandler);
-
-        var menu = new cc.Menu(one, two, three, four, five, six);
-        this.addChild(menu);
-//        menu.alignItemsVertically();
-//        menu.alignItemsHorizontally();
-        menu.alignItemsHorizontallyWithPadding(20);
-//        menu.alignItemsInRows(4,2);
-//        menu.alignItemsInColumns(2,2,2);
-    },
-
-    clickHandler: function () {
-    }
-});
-
-var TTFLayer = cc.Layer.extend({
-    ctor: function () {
-        this._super();
-
-        var winSize = cc.director.getWinSize();
-        var aboutText = new cc.LabelTTF("About the game ...", "Arial", 20, cc.size(350, 200), cc.TEXT_ALIGNMENT_LEFT, cc.VERTICAL_TEXT_ALIGNMENT_TOP);
-        aboutText.x = winSize.width/2;
-        aboutText.y = winSize.height/2;
-        this.addChild(aboutText);
-    }
-});
-
-var UIEditorLayer = cc.Layer.extend({
-
-    ctor: function () {
-        this._super();
-        var root = ccs.uiReader.widgetFromJsonFile("res/FirstUI_1/FirstUI_1.json");
-        this.addChild(root);
-
-        var button = ccui.helper.seekWidgetByTag(root, 30);
         if("touches" in cc.sys.capabilities){
-            button.addTouchEventListener(this.buttonTouched, this);
-        }else{
-            button.addClickEventListener(this.buttonClicked.bind(this));
+            cc.eventManager.addListener({
+                event: cc.EventListener.TOUCH_ONE_BY_ONE,
+                onTouchBegan: this._onTouchBegan.bind(this)
+            }, this.mapPanel);
+        } else {
+            cc.eventManager.addListener({
+                event: cc.EventListener.MOUSE,
+                onMouseDown: this._onMouseDown.bind(this)
+            }, this.mapPanel);
         }
 
-        var checkbox = ccui.helper.seekWidgetByName(root, "CheckBox_1");
-        checkbox.addEventListener(this.selectedStateEvent, this);
+        this._init();
 
-        this.textField = ccui.helper.seekWidgetByTag(root, 36);
-        this.textField.addEventListener(this.textFieldEvent, this);
+        this.ui = new GameUI(this);
+        this.addChild(this.ui, 3);
 
-        if(!cc.sys.isNative){
-            this.textField.setString("");
-        }
+        return true;
     },
 
-    buttonTouched: function (sender, type) {
-        switch (type) {
-            case ccui.Widget.TOUCH_BEGAN:
-                trace("Touch Down");
-                break;
+    _init: function () {
+        this.steps = 0;
+        this.level = Storage.getCurrentLevel();
+        this.score = Storage.getCurrentScore();
+        this.limitStep = Constant.levels[this.level].limitStep;
+        this.targetScore = Constant.levels[this.level].targetScore;
 
-            case ccui.Widget.TOUCH_MOVED:
-                trace("Touch Move");
-                break;
-
-            case ccui.Widget.TOUCH_ENDED:
-                trace("Touch Up");
-                break;
-
-            case ccui.Widget.TOUCH_CANCELED:
-                trace("Touch Cancelled");
-                break;
-        }
-    },
-
-    buttonClicked: function (sender) {
-        trace("buttonClicked");
-        trace("textField input: " + this.textField.getString());
-    },
-
-    selectedStateEvent: function (sender, type) {
-        switch (type) {
-            case ccui.CheckBox.EVENT_SELECTED:
-                trace("Selected");
-                break;
-            case ccui.CheckBox.EVENT_UNSELECTED:
-                trace("Unselected");
-                break;
+        this.map = [];
+        for (var i = 0; i < Constant.MAP_SIZE; i++) {
+            var column = [];
+            for (var j = 0; j < Constant.MAP_SIZE; j++) {
+                var candy = Candy.createRandomType(i,j);
+                this.mapPanel.addChild(candy);
+                candy.x = i * Constant.CANDY_WIDTH + Constant.CANDY_WIDTH/2;
+                candy.y = j * Constant.CANDY_WIDTH + Constant.CANDY_WIDTH/2;
+                column.push(candy);
+            }
+            this.map.push(column);
         }
     },
 
-    textFieldEvent: function (sender, type) {
-        switch (type) {
-            case ccui.TextField. EVENT_ATTACH_WITH_IME:
-                trace("attach with IME");
-                break;
-            case ccui.TextField. EVENT_DETACH_WITH_IME:
-                trace("detach with IME");
-                break;
-            case ccui.TextField. EVENT_INSERT_TEXT:
-                trace("insert words");
-                break;
-            case ccui.TextField. EVENT_DELETE_BACKWARD:
-                trace("delete word");
-                break;
+    _onTouchBegan: function (touch, event) {
+        var column = Math.floor((touch.getLocation().x - this.mapPanel.x)/Constant.CANDY_WIDTH);
+        var row = Math.floor((touch.getLocation().y - this.mapPanel.y)/Constant.CANDY_WIDTH);
+        this._popCandy(column, row);
+        return true;
+    },
+
+    _onMouseDown: function (event) {
+        var column = Math.floor((event.getLocationX() - this.mapPanel.x)/Constant.CANDY_WIDTH);
+        var row = Math.floor((event.getLocationY() - this.mapPanel.y)/Constant.CANDY_WIDTH);
+        this._popCandy(column, row);
+    },
+
+    _popCandy: function (column, row) {
+        if(this.moving)
+            return;
+
+        var joinCandys = [this.map[column][row]];
+        var index = 0;
+        var pushIntoCandys = function(element){
+            if(joinCandys.indexOf(element) < 0)
+                joinCandys.push(element);
+        };
+        while(index < joinCandys.length){
+            var candy = joinCandys[index];
+            if(this._checkCandyExist(candy.column-1, candy.row) && this.map[candy.column-1][candy.row].type == candy.type){
+                pushIntoCandys(this.map[candy.column-1][candy.row]);
+            }
+            if(this._checkCandyExist(candy.column+1, candy.row) && this.map[candy.column+1][candy.row].type == candy.type){
+                pushIntoCandys(this.map[candy.column+1][candy.row]);
+            }
+            if(this._checkCandyExist(candy.column, candy.row-1) && this.map[candy.column][candy.row-1].type == candy.type){
+                pushIntoCandys(this.map[candy.column][candy.row-1]);
+            }
+            if(this._checkCandyExist(candy.column, candy.row+1) && this.map[candy.column][candy.row+1].type == candy.type){
+                pushIntoCandys(this.map[candy.column][candy.row+1]);
+            }
+            index++;
+        }
+
+        if(joinCandys.length <= 1)
+            return;
+
+        this.steps++;
+        this.moving = true;
+
+        for (var i = 0; i < joinCandys.length; i++) {
+            var candy = joinCandys[i];
+            this.mapPanel.removeChild(candy);
+            this.map[candy.column][candy.row] = null;
+        }
+
+        this.score += joinCandys.length*joinCandys.length;
+        this._generateNewCandy();
+        this._checkSucceedOrFail();
+    },
+
+    _checkCandyExist: function(i, j){
+        if(i >= 0 && i < Constant.MAP_SIZE && j >= 0 && j < Constant.MAP_SIZE){
+            return true;
+        }
+        return false;
+    },
+
+    _generateNewCandy: function () {
+        var maxTime = 0;
+        for (var i = 0; i < Constant.MAP_SIZE; i++) {        //deal each column
+            var missCount = 0;
+            for (var j = 0; j < this.map[i].length; j++) {
+
+                var candy = this.map[i][j];
+                if(!candy){
+                    var candy = Candy.createRandomType(i,Constant.MAP_SIZE+missCount);
+                    this.mapPanel.addChild(candy);
+                    candy.x = candy.column * Constant.CANDY_WIDTH + Constant.CANDY_WIDTH/2;
+                    candy.y = candy.row * Constant.CANDY_WIDTH + Constant.CANDY_WIDTH/2;
+                    this.map[i][candy.row] = candy;
+                    missCount++;
+                }else{
+                    var fallLength = missCount;
+                    if(fallLength > 0){
+                        var duration = Math.sqrt(2*fallLength/Constant.FALL_ACCELERATION);
+                        if(duration > maxTime)
+                            maxTime = duration;
+                        var move = cc.moveTo(duration, candy.x, candy.y-Constant.CANDY_WIDTH*fallLength).easing(cc.easeIn(2));    //easeIn参数是幂，以几次幂加速
+                        candy.runAction(move);
+                        candy.row -= fallLength;        //adjust all candy's row
+                        this.map[i][j] = null;
+                        this.map[i][candy.row] = candy;
+                    }
+                }
+            }
+
+            //移除超出地图的临时元素位置
+            for (var j = this.map[i].length; j >= Constant.MAP_SIZE; j--) {
+                this.map[i].splice(j, 1);
+            }
+        }
+        this.scheduleOnce(this._finishCandyFalls.bind(this), maxTime);
+    },
+
+    _finishCandyFalls: function () {
+        this.moving = false;
+    },
+
+    _checkSucceedOrFail: function () {
+        if(this.score > this.targetScore){
+            this.ui.showSuccess();
+            this.score += (this.limitStep - this.steps) * 30;
+            Storage.setCurrentLevel(this.level+1);
+            Storage.setCurrentScore(this.score);
+            this.scheduleOnce(function(){
+                cc.director.runScene(new GameScene());
+            }, 3);
+        }else if(this.steps >= this.limitStep){
+            this.ui.showFail();
+            Storage.setCurrentLevel(0);
+            Storage.setCurrentScore(0);
+            this.scheduleOnce(function(){
+                cc.director.runScene(new GameScene());
+            }, 3);
         }
     }
+
 });
 
-var MenuScene = cc.Scene.extend({
+var GameScene = cc.Scene.extend({
     onEnter:function () {
         this._super();
-//        var layer = new MenuItemSpriteLayer();
-//        var layer = new MenuItemImageLayer();
-//        var layer = new MenuItemFontLayer();
-//        var layer = new MenuItemLabelLayer();
-//        var layer = new MenuItemToggleLayer();
-//        var layer = new MenuItemToggleLayer2();
-//        var layer = new MenuLayer();
-//        var layer = new TTFLayer();
-        var layer = new UIEditorLayer();
+        var layer = new GameLayer();
         this.addChild(layer);
     }
 });
