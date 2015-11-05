@@ -2,214 +2,148 @@ function trace(){
     cc.log(Array.prototype.join.call(arguments, ", "));
 }
 
-var MouseEventLayer = cc.Layer.extend({
+var ScheduleUpdateLayer = cc.Layer.extend({
     ctor:function () {
         this._super();
+        this.scheduleUpdate();
+    },
 
-        if( 'mouse' in cc.sys.capabilities ) {
-            cc.eventManager.addListener({
-                event: cc.EventListener.MOUSE,
-                onMouseDown: function(event){
-                    var pos = event.getLocation();
-                    var target = event.getCurrentTarget();
-                    if(event.getButton() === cc.EventMouse.BUTTON_RIGHT)
-                        trace("onRightMouseDown at: " + pos.x + " " + pos.y );
-                    else if(event.getButton() === cc.EventMouse.BUTTON_LEFT)
-                        trace("onLeftMouseDown at: " + pos.x + " " + pos.y );
-                },
-                onMouseMove: function(event){
-                    var pos = event.getLocation(), target = event.getCurrentTarget();
-                    trace("onMouseMove at: " + pos.x + " " + pos.y );
-                },
-                onMouseUp: function(event){
-                    var pos = event.getLocation(), target = event.getCurrentTarget();
-                    trace("onMouseUp at: " + pos.x + " " + pos.y );
-                }
-            }, this);
-        } else {
-            trace("MOUSE Not supported");
-        }
-
-        return true;
+    update: function () {
+        //do something
     }
 });
 
-var TouchOneByOneLayer = cc.Layer.extend({
+
+var ScheduleLayer = cc.Layer.extend({
     ctor:function () {
         this._super();
 
-        if( 'touches' in cc.sys.capabilities ) {
-            cc.eventManager.addListener({
-                event: cc.EventListener.TOUCH_ONE_BY_ONE,
-                swallowTouches: true,
-                onTouchBegan: this.onTouchBegan,
-                onTouchMoved: this.onTouchMoved,
-                onTouchEnded: this.onTouchEnded,
-                onTouchCancelled: this.onTouchCancelled
-            }, this);
-        } else {
-            trace("TOUCH-ONE-BY-ONE test is not supported on desktop");
-        }
-
-        return true;
+//        this.schedule(this.tick, 1, cc.REPEAT_FOREVER, 1);
+//        setInterval(this.tick, 1000);
+        this.schedule(this.tick.bind(this), 1, cc.REPEAT_FOREVER, 1);
+        this.tickCount = 0;
     },
 
-    onTouchBegan:function(touch, event) {
-        var pos = touch.getLocation();
-        var id = touch.getID();
-        trace("onTouchBegan at: " + pos.x + " " + pos.y + " Id:" + id );
-        var winSize = cc.director.getWinSize();
-        if( pos.x < winSize.width/2) {
-            return true;
-        }
-        return false;
-    },
-    onTouchMoved:function(touch, event) {
-        var pos = touch.getLocation();
-        var id = touch.getID();
-        trace("onTouchMoved at: " + pos.x + " " + pos.y + " Id:" + id );
-    },
-    onTouchEnded:function(touch, event) {
-        var pos = touch.getLocation();
-        var id = touch.getID();
-        trace("onTouchEnded at: " + pos.x + " " + pos.y + " Id:" + id );
-    },
-    onTouchCancelled:function(touch, event) {
-        var pos = touch.getLocation();
-        var id = touch.getID();
-        trace("onTouchCancelled at: " + pos.x + " " + pos.y + " Id:" + id );
-    }
-});
-
-var TouchAllAtOnceLayer = cc.Layer.extend({
-    ctor:function () {
-        this._super();
-
-        if( 'touches' in cc.sys.capabilities ) {
-            cc.eventManager.addListener({
-                event: cc.EventListener.TOUCH_ALL_AT_ONCE,
-                onTouchesBegan: this.onTouchesBegan,
-                onTouchesMoved: this.onTouchesMoved,
-                onTouchesEnded: this.onTouchesEnded,
-                onTouchesCancelled: this.onTouchesCancelled
-            }, this);
-        } else {
-            trace("TOUCHES not supported");
-        }
-    },
-
-    onTouchesBegan:function(touches, event) {
-        for (var i=0; i < touches.length;i++ ) {
-            var touch = touches[i];
-            var pos = touch.getLocation();
-            var id = touch.getID();
-            trace("Touch #" + i + ". onTouchesBegan at: " + pos.x + " " + pos.y + " Id:" + id);
-        }
-    },
-    onTouchesMoved:function(touches, event) {
-        for (var i=0; i < touches.length;i++ ) {
-            var touch = touches[i];
-            var pos = touch.getLocation();
-            var id = touch.getID();
-            trace("Touch #" + i + ". onTouchesMoved at: " + pos.x + " " + pos.y + " Id:" + id);
-        }
-    },
-    onTouchesEnded:function(touches, event) {
-        for (var i=0; i < touches.length;i++ ) {
-            var touch = touches[i];
-            var pos = touch.getLocation();
-            var id = touch.getID();
-            trace("Touch #" + i + ". onTouchesEnded at: " + pos.x + " " + pos.y + " Id:" + id);
-        }
-    },
-    onTouchesCancelled:function(touches, event) {
-        for (var i=0; i < touches.length;i++ ) {
-            var touch = touches[i];
-            var pos = touch.getLocation();
-            var id = touch.getID();
-            trace("Touch #" + i + ". onTouchesCancelled at: " + pos.x + " " + pos.y + " Id:" + id);
+    tick: function () {
+        trace("tick");
+        this.tickCount++;
+        if(this.tickCount == 5){
+            this.unschedule(this.tick);
         }
     }
 });
 
 
-var KeyboardTestLayer = cc.Layer.extend({
+var ResumeLayer = cc.Layer.extend({
 
     ctor: function () {
         this._super();
-        if( 'keyboard' in cc.sys.capabilities ) {
-            cc.eventManager.addListener({
-                event: cc.EventListener.KEYBOARD,
-                onKeyReleased: function(keyCode, event) {
-                    if (keyCode == cc.KEY.back) {
-                        cc.log("return button clicked. keycode:" + keyCode);
-                        cc.director.end();
-                    }
-                    else if (keyCode == cc.KEY.menu) {
-                        cc.log("menu button clicked. keycode:" + keyCode);
-                    }
-                }
-            }, this);
-        } else {
-            cc.log("KEYBOARD Not supported");
+        this.scheduleUpdate();
+        this.schedule(this.scheduleTest, 1);
+        this.scheduleOnce(this.scheduleOnceTest, 3);
+
+        setTimeout(function(){
+            trace("pause", this.currentTime());
+            this.pause();
+        }.bind(this), 2000);
+
+        setTimeout(function(){
+            trace("resume", this.currentTime());
+            this.resume();
+        }.bind(this), 5000);
+
+        trace(this.currentTime());
+        this.frame = 0;
+    },
+
+    update: function () {
+        this.frame++;
+        if(this.frame%10==0){
+            trace("update 10 frame");
+        }
+    },
+
+    scheduleTest: function () {
+        trace("scheduleTest", this.currentTime());
+    },
+
+    scheduleOnceTest: function () {
+        trace("scheduleOnceTest", this.currentTime());
+    },
+
+    currentTime: function () {
+        return parseInt(new Date().getTime()/1000);
+    }
+});
+
+
+var InaccuracyTestLayer = cc.Layer.extend({
+
+    ctor: function () {
+        this._super();
+        var startTime = new Date().getTime();
+        var count = 0;
+        this.schedule(function(){
+            var timePass = new Date().getTime() - startTime;
+            count++;
+            var delta = timePass - (count*100);
+            trace("time pass", timePass, "total delta", delta, "count", count);
+        }, 0.1);
+
+        this.scheduleUpdate();
+    },
+
+    update: function () {
+        for (var i = 0; i < 10000000; i++) {
+            b = 1/0.22222;
         }
     }
 });
 
 
-var AccelerometerLayer = cc.Layer.extend({
-    ctor:function () {
+var BetterScheduleLayer = cc.Layer.extend({
+
+    ctor: function () {
         this._super();
 
-        var winSize = cc.director.getWinSize();
+        var startTime = Date.now();
+        var count = 0;
+        this.schedule2(function(){
+            var timePass = Date.now() - startTime;
+            count++;
+            var delta = timePass - (count*100);
+            trace("time pass", timePass, "total delta", delta, "count", count);
+        }, 0.1);
+        this.scheduleUpdate();
+    },
 
-        if( 'accelerometer' in cc.sys.capabilities ) {
-            cc.inputManager.setAccelerometerInterval(1/30);
-            cc.inputManager.setAccelerometerEnabled(true);
-            cc.eventManager.addListener({
-                event: cc.EventListener.ACCELERATION,
-                callback: function(accelerometerInfo, event){
-                    var target = event.getCurrentTarget();
-                    cc.log('Accel x: '+ accelerometerInfo.x + ' y:' + accelerometerInfo.y + ' z:' + accelerometerInfo.z + ' time:' + accelerometerInfo.timestamp );
+    schedule2: function (callback, interval) {
+        var then = Date.now();
+        interval = interval*1000;
+        this.schedule(function(){
+            var now = Date.now();
+            var delta = now - then;
+            if(delta > interval){
+                then = now - (delta % interval);
+                callback.call(this);
+            }
+        }.bind(this), 0);
+    },
 
-                    var w = winSize.width;
-                    var h = winSize.height;
-
-                    var x = w * accelerometerInfo.x + w/2;
-                    var y = h * accelerometerInfo.y + h/2;
-
-                    x = x*0.2 + target.prevX*0.8;       //使小球慢慢移动到目标位置
-                    y = y*0.2 + target.prevY*0.8;
-
-                    target.prevX = x;
-                    target.prevY = y;
-                    target.sprite.x = x;
-                    target.sprite.y = y ;
-                }
-            }, this);
-
-            var sprite = this.sprite = new cc.Sprite("res/item_2.png");
-            this.addChild( sprite );
-            sprite.x = winSize.width/2;
-            sprite.y = winSize.height/2;
-
-            this.prevX = 0;
-            this.prevY = 0;
-        } else {
-            cc.log("ACCELEROMETER not supported");
+    update: function () {
+        for (var i = 0; i < 10000000; i++) {
+            b = 1/0.22222;
         }
     }
 });
 
-
-
-var ControlScene = cc.Scene.extend({
+var ScheduleScene = cc.Scene.extend({
     onEnter:function () {
         this._super();
-//        var layer = new MouseEventLayer();
-//        var layer = new TouchOneByOneLayer();
-//        var layer = new KeyboardTestLayer();
-        var layer = new AccelerometerLayer();
+//        var layer = new ScheduleLayer();
+//        var layer = new ResumeLayer();
+//        var layer = new InaccuracyTestLayer();
+        var layer = new BetterScheduleLayer();
 
         this.addChild(layer);
     }
