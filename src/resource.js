@@ -1,6 +1,8 @@
 
 var g_resources = [
-    "res/tile0.png",
-    "res/map.tmx",
-    "res/tmw_desert_spacing.png"
+    "res/font.fnt",
+    "res/font_0.png",
+    "res/bm.fnt",
+    "res/bm_0.png"
 ];
+
