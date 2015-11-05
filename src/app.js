@@ -2,149 +2,255 @@ function trace(){
     cc.log(Array.prototype.join.call(arguments, ", "));
 }
 
-var ScheduleUpdateLayer = cc.Layer.extend({
-    ctor:function () {
-        this._super();
-        this.scheduleUpdate();
-    },
-
-    update: function () {
-        //do something
-    }
-});
-
-
-var ScheduleLayer = cc.Layer.extend({
-    ctor:function () {
-        this._super();
-
-//        this.schedule(this.tick, 1, cc.REPEAT_FOREVER, 1);
-//        setInterval(this.tick, 1000);
-        this.schedule(this.tick.bind(this), 1, cc.REPEAT_FOREVER, 1);
-        this.tickCount = 0;
-    },
-
-    tick: function () {
-        trace("tick");
-        this.tickCount++;
-        if(this.tickCount == 5){
-            this.unschedule(this.tick);
-        }
-    }
-});
-
-
-var ResumeLayer = cc.Layer.extend({
-
-    ctor: function () {
-        this._super();
-        this.scheduleUpdate();
-        this.schedule(this.scheduleTest, 1);
-        this.scheduleOnce(this.scheduleOnceTest, 3);
-
-        setTimeout(function(){
-            trace("pause", this.currentTime());
-            this.pause();
-        }.bind(this), 2000);
-
-        setTimeout(function(){
-            trace("resume", this.currentTime());
-            this.resume();
-        }.bind(this), 5000);
-
-        trace(this.currentTime());
-        this.frame = 0;
-    },
-
-    update: function () {
-        this.frame++;
-        if(this.frame%10==0){
-            trace("update 10 frame");
-        }
-    },
-
-    scheduleTest: function () {
-        trace("scheduleTest", this.currentTime());
-    },
-
-    scheduleOnceTest: function () {
-        trace("scheduleOnceTest", this.currentTime());
-    },
-
-    currentTime: function () {
-        return parseInt(new Date().getTime()/1000);
-    }
-});
-
-
-var InaccuracyTestLayer = cc.Layer.extend({
-
-    ctor: function () {
-        this._super();
-        var startTime = new Date().getTime();
-        var count = 0;
-        this.schedule(function(){
-            var timePass = new Date().getTime() - startTime;
-            count++;
-            var delta = timePass - (count*100);
-            trace("time pass", timePass, "total delta", delta, "count", count);
-        }, 0.1);
-
-        this.scheduleUpdate();
-    },
-
-    update: function () {
-        for (var i = 0; i < 10000000; i++) {
-            b = 1/0.22222;
-        }
-    }
-});
-
-
-var BetterScheduleLayer = cc.Layer.extend({
+var MenuItemSpriteLayer = cc.Layer.extend({
 
     ctor: function () {
         this._super();
 
-        var startTime = Date.now();
-        var count = 0;
-        this.schedule2(function(){
-            var timePass = Date.now() - startTime;
-            count++;
-            var delta = timePass - (count*100);
-            trace("time pass", timePass, "total delta", delta, "count", count);
-        }, 0.1);
-        this.scheduleUpdate();
+        var spriteNormal = new cc.Sprite("res/startgame.png");
+        var spriteSelected = new cc.Sprite("res/startgame2.png");
+        var spriteDisable = new cc.Sprite("res/startgame3.png");
+//        var menuSprite = new cc.MenuItemSprite(spriteNormal, spriteSelected, spriteDisable, this.startGame.bind(this));
+        var menuSprite = new cc.MenuItemSprite(spriteNormal, spriteSelected, spriteDisable, this.startGame);
+        var menu = new cc.Menu(menuSprite);
+        this.addChild(menu);
+        menuSprite.setEnabled(false);
     },
 
-    schedule2: function (callback, interval) {
-        var then = Date.now();
-        interval = interval*1000;
-        this.schedule(function(){
-            var now = Date.now();
-            var delta = now - then;
-            if(delta > interval){
-                then = now - (delta % interval);
-                callback.call(this);
-            }
-        }.bind(this), 0);
+    startGame: function () {
+        trace("this is MenuItemSpriteLayer?", this instanceof MenuItemSpriteLayer);
+    }
+});
+
+var MenuItemImageLayer = cc.Layer.extend({
+
+    ctor: function () {
+        this._super();
+
+        var menuImage = new cc.MenuItemImage("res/startgame.png", "res/startgame2.png", "res/startgame3.png", this.startGame, this);
+        var menu = new cc.Menu(menuImage);
+        this.addChild(menu);
     },
 
-    update: function () {
-        for (var i = 0; i < 10000000; i++) {
-            b = 1/0.22222;
+    startGame: function () {
+        trace("menuImage clicked");
+    }
+});
+
+var MenuItemFontLayer = cc.Layer.extend({
+
+    ctor: function () {
+        this._super();
+
+        var menuFont = new cc.MenuItemFont("START GAME", this.startGame, this);
+        menuFont.fontSize = 32;
+        menuFont.fontName = "Arial";
+        var menu = new cc.Menu(menuFont);
+        this.addChild(menu);
+    },
+
+    startGame: function () {
+        trace("start game button clicked");
+    }
+});
+
+var MenuItemLabelLayer = cc.Layer.extend({
+
+    ctor: function () {
+        this._super();
+
+//        var label = new cc.LabelTTF("START GAME", "Arial", 32);
+//        var item = new cc.MenuItemLabel(label, this.startGame, this);
+
+        var label = new cc.LabelBMFont("START GAME", "res/font.fnt");
+        var item = new cc.MenuItemLabel(label, this.startGame, this);
+
+        var menu = new cc.Menu(item);
+        this.addChild(menu);
+    },
+
+    startGame: function () {
+        trace("start game button clicked");
+    }
+});
+
+var MenuItemToggleLayer = cc.Layer.extend({
+
+    ctor: function () {
+        this._super();
+
+        cc.MenuItemFont.setFontName("Arial");
+        cc.MenuItemFont.setFontSize(32);
+        var on = new cc.MenuItemFont("ON");
+        var off = new cc.MenuItemFont("OFF");
+        var item = new cc.MenuItemToggle(off, on, this.toggleMusic, this);
+
+        var menu = new cc.Menu(item);
+        this.addChild(menu);
+    },
+
+    toggleMusic: function () {
+        if(this.musicOff){
+            trace("music on");
+            this.musicOff = false;
+        }else{
+            trace("music off");
+            this.musicOff = true;
         }
     }
 });
 
-var ScheduleScene = cc.Scene.extend({
+
+var MenuItemToggleLayer2 = cc.Layer.extend({
+
+    ctor: function () {
+        this._super();
+
+        cc.MenuItemFont.setFontName("Arial");
+        cc.MenuItemFont.setFontSize(32);
+        var easy = new cc.MenuItemFont("EASY");
+        var normal = new cc.MenuItemFont("NORMAL");
+        var hard = new cc.MenuItemFont("HARD");
+        var item = new cc.MenuItemToggle(easy, normal, hard, this.changeMode, this);
+
+        var menu = new cc.Menu(item);
+        this.addChild(menu);
+    },
+
+    changeMode: function () {
+    }
+});
+
+var MenuLayer = cc.Layer.extend({
+
+    ctor: function () {
+        this._super();
+
+        cc.MenuItemFont.setFontName("Arial");
+        cc.MenuItemFont.setFontSize(24);
+        var one = new cc.MenuItemFont("one", this.clickHandler);
+        var two = new cc.MenuItemFont("two", this.clickHandler);
+        var three = new cc.MenuItemFont("three", this.clickHandler);
+        var four = new cc.MenuItemFont("four", this.clickHandler);
+        var five = new cc.MenuItemFont("five", this.clickHandler);
+        var six = new cc.MenuItemFont("six", this.clickHandler);
+
+        var menu = new cc.Menu(one, two, three, four, five, six);
+        this.addChild(menu);
+//        menu.alignItemsVertically();
+//        menu.alignItemsHorizontally();
+        menu.alignItemsHorizontallyWithPadding(20);
+//        menu.alignItemsInRows(4,2);
+//        menu.alignItemsInColumns(2,2,2);
+    },
+
+    clickHandler: function () {
+    }
+});
+
+var TTFLayer = cc.Layer.extend({
+    ctor: function () {
+        this._super();
+
+        var winSize = cc.director.getWinSize();
+        var aboutText = new cc.LabelTTF("About the game ...", "Arial", 20, cc.size(350, 200), cc.TEXT_ALIGNMENT_LEFT, cc.VERTICAL_TEXT_ALIGNMENT_TOP);
+        aboutText.x = winSize.width/2;
+        aboutText.y = winSize.height/2;
+        this.addChild(aboutText);
+    }
+});
+
+var UIEditorLayer = cc.Layer.extend({
+
+    ctor: function () {
+        this._super();
+        var root = ccs.uiReader.widgetFromJsonFile("res/FirstUI_1/FirstUI_1.json");
+        this.addChild(root);
+
+        var button = ccui.helper.seekWidgetByTag(root, 30);
+        if("touches" in cc.sys.capabilities){
+            button.addTouchEventListener(this.buttonTouched, this);
+        }else{
+            button.addClickEventListener(this.buttonClicked.bind(this));
+        }
+
+        var checkbox = ccui.helper.seekWidgetByName(root, "CheckBox_1");
+        checkbox.addEventListener(this.selectedStateEvent, this);
+
+        this.textField = ccui.helper.seekWidgetByTag(root, 36);
+        this.textField.addEventListener(this.textFieldEvent, this);
+
+        if(!cc.sys.isNative){
+            this.textField.setString("");
+        }
+    },
+
+    buttonTouched: function (sender, type) {
+        switch (type) {
+            case ccui.Widget.TOUCH_BEGAN:
+                trace("Touch Down");
+                break;
+
+            case ccui.Widget.TOUCH_MOVED:
+                trace("Touch Move");
+                break;
+
+            case ccui.Widget.TOUCH_ENDED:
+                trace("Touch Up");
+                break;
+
+            case ccui.Widget.TOUCH_CANCELED:
+                trace("Touch Cancelled");
+                break;
+        }
+    },
+
+    buttonClicked: function (sender) {
+        trace("buttonClicked");
+        trace("textField input: " + this.textField.getString());
+    },
+
+    selectedStateEvent: function (sender, type) {
+        switch (type) {
+            case ccui.CheckBox.EVENT_SELECTED:
+                trace("Selected");
+                break;
+            case ccui.CheckBox.EVENT_UNSELECTED:
+                trace("Unselected");
+                break;
+        }
+    },
+
+    textFieldEvent: function (sender, type) {
+        switch (type) {
+            case ccui.TextField. EVENT_ATTACH_WITH_IME:
+                trace("attach with IME");
+                break;
+            case ccui.TextField. EVENT_DETACH_WITH_IME:
+                trace("detach with IME");
+                break;
+            case ccui.TextField. EVENT_INSERT_TEXT:
+                trace("insert words");
+                break;
+            case ccui.TextField. EVENT_DELETE_BACKWARD:
+                trace("delete word");
+                break;
+        }
+    }
+});
+
+var MenuScene = cc.Scene.extend({
     onEnter:function () {
         this._super();
-//        var layer = new ScheduleLayer();
-//        var layer = new ResumeLayer();
-//        var layer = new InaccuracyTestLayer();
-        var layer = new BetterScheduleLayer();
-
+//        var layer = new MenuItemSpriteLayer();
+//        var layer = new MenuItemImageLayer();
+//        var layer = new MenuItemFontLayer();
+//        var layer = new MenuItemLabelLayer();
+//        var layer = new MenuItemToggleLayer();
+//        var layer = new MenuItemToggleLayer2();
+//        var layer = new MenuLayer();
+//        var layer = new TTFLayer();
+        var layer = new UIEditorLayer();
         this.addChild(layer);
     }
 });
