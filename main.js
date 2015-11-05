@@ -48,7 +48,7 @@
  */
 
 cc.game.onStart = function(){
-    cc.view.adjustViewPort(false);
+    cc.view.adjustViewPort(true);
     cc.view.setDesignResolutionSize(500, 500, cc.ResolutionPolicy.SHOW_ALL);
     cc.view.resizeWithBrowserSize(true);
     //load resources
