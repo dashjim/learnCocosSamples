@@ -1,94 +1,116 @@
-
-function trace(){
+function trace() {
     cc.log(Array.prototype.join.call(arguments, ", "));
 }
 
-var ParallaxLayer = cc.Layer.extend({
-    ctor:function () {
-        this._super();
+var TiledMapLayer = cc.Layer.extend({
 
-        var bg = new cc.ParallaxNode();
-        var bg1 = new cc.Sprite("res/bgLayer.jpg");
-        var bg2 = new cc.Sprite("res/bgLayer2.png");
-        var bg3 = new cc.Sprite("res/bgLayer3.png");
-        var bg4 = new cc.Sprite("res/bgLayer4.png");
-        bg.addChild(bg1, 1, cc.p(0.1, 0), cc.p(bg1.width/2, bg1.height/2));
-        bg.addChild(bg2, 2, cc.p(0.3, 0), cc.p(bg2.width/2, bg2.height/2));
-        bg.addChild(bg3, 3, cc.p(0.5, 0), cc.p(bg3.width/2, bg3.height/2));
-        bg.addChild(bg4, 4, cc.p(1, 0), cc.p(bg4.width/2, bg4.height/2));
-        var action = cc.moveBy(1, -200, 0);
-        bg.runAction(cc.sequence(action, action.clone().reverse()).repeatForever());
-        this.addChild(bg);
+    ctor: function () {
+        this._super();
+        var map = new cc.TMXTiledMap("res/map.tmx");
+        this.addChild(map);
+        var layer = map.getLayer("layer1");
+        var tile0 = layer.getTileAt(cc.p(1, 1));
+        var rotate = cc.rotateBy(2, 360);
+        tile0.runAction(rotate);
+        var properties = map.getPropertiesForGID(layer.getTileGIDAt(cc.p(3, 2)));
+        trace("properties.block", properties.block);
+
+        this.scheduleOnce(function () {
+            layer.setTileGID(31, cc.p(0, 0));
+        }, 2);
     }
 });
 
-var UnlimitedParallaxLayer = cc.Layer.extend({
 
-    _bg1:null,
-    _bg2:null,
-    _bg3:null,
-    _bg4:null,
+screenSize = 10;
+tileSize = 32;
+var UnlimitedTiledMapLayer = cc.Layer.extend({
 
-    speed:5,
-
-    ctor:function () {
+    map: null,
+    mapRight:0,
+    mapTop:0,
+    mapLeft:0,
+    mapBottom:0,
+    ctor: function () {
         this._super();
-        this.scheduleUpdate();
 
-        var buildParallaxBackground = function(texture){
-            var layer = new cc.Layer();
-            var bg1 = new cc.Sprite(texture);
-            bg1.x = bg1.width/2;
-            bg1.y = bg1.height/2;
-            layer.addChild(bg1);
-            var bg2 = new cc.Sprite(texture);
-            bg2.x = bg2.width/2 + bg2.width;
-            bg2.y = bg2.height/2;
-            layer.addChild(bg2);
-            return layer;
-        };
+        var map = new cc.SpriteBatchNode("res/tile0.png");
+        for (var i = 0; i < screenSize+2; i++) {
+            for (var j = 0; j < screenSize+2; j++) {
+                var tile = new cc.Sprite("res/tile" + this.getGIDAt(i, j) + ".png");
+                tile.x = i * tileSize + tileSize / 2;
+                tile.y = j * tileSize + tileSize / 2;
+                map.addChild(tile);
+            }
+        }
+        this.map = map;
+        map.x = -tileSize;
+        map.y = -tileSize;
+        this.mapRight = this.mapTop = screenSize+2;
+        this.mapLeft = this.mapBottom = 0;
+        this.addChild(map);
 
-        //sky
-        this._bg1 = buildParallaxBackground("res/bgLayer.jpg");
-        this.addChild(this._bg1);
-        //hill
-        this._bg2 = buildParallaxBackground("res/bgLayer2.png");
-        this.addChild(this._bg2);
-        //buildings
-        this._bg3 = buildParallaxBackground("res/bgLayer3.png");
-        this.addChild(this._bg3);
-        //trees
-        this._bg4 = buildParallaxBackground("res/bgLayer4.png");
-        this.addChild(this._bg4);
-
-        return true;
+        cc.eventManager.addListener({
+            event: cc.EventListener.MOUSE,
+            onMouseMove: this.move.bind(this)
+        }, this);
     },
 
-    update:function(dt) {
-        var winSize = cc.director.getWinSize();
-        this._bg1.x -= Math.ceil(this.speed * 0.1);
-        if (this._bg1.x < -parseInt(winSize.width))
-            this._bg1.x = 0;
+    getGIDAt: function (i, j) {
+        //可以扩展为真正配置，这里简单全部返回一样的
+        return 0;
+    },
 
-        this._bg2.x -= Math.ceil(this.speed * 0.3);
-        if (this._bg2.x < -parseInt(winSize.width))
-            this._bg2.x = 0;
-
-        this._bg3.x -= Math.ceil(this.speed * 0.5);
-        if (this._bg3.x < -parseInt(winSize.width))
-            this._bg3.x = 0;
-
-        this._bg4.x -= Math.ceil(this.speed * 1);
-        if (this._bg4.x < -parseInt(winSize.width))
-            this._bg4.x = 0;
+    move: function (event) {
+        if (event.getButton() == cc.EventMouse.BUTTON_LEFT) {
+            this.map.x += event.getDeltaX();
+            this.map.y += event.getDeltaY();
+            if(this.map.x/tileSize + this.mapRight - screenSize < 1){
+                for (var i = -this.mapBottom; i < this.mapTop; i++) {
+                    var tile = new cc.Sprite("res/tile" + this.getGIDAt(this.mapRight, i) + ".png");
+                    tile.x = this.mapRight * tileSize + tileSize / 2;
+                    tile.y = i * tileSize + tileSize / 2;
+                    this.map.addChild(tile);
+                }
+                this.mapRight++;
+            }
+            if(this.map.x/tileSize - this.mapLeft > -1){
+                for (var i = -this.mapBottom; i < this.mapTop; i++) {
+                    var tile = new cc.Sprite("res/tile" + this.getGIDAt(-this.mapLeft, i) + ".png");
+                    tile.x = -this.mapLeft * tileSize + tileSize / 2;
+                    tile.y = i * tileSize + tileSize / 2;
+                    this.map.addChild(tile);
+                }
+                this.mapLeft++;
+            }
+            if(this.map.y/tileSize + this.mapTop - screenSize < 1){
+                for (var i = -this.mapLeft; i < this.mapRight; i++) {
+                    var tile = new cc.Sprite("res/tile" + this.getGIDAt(i, this.mapTop) + ".png");
+                    tile.x = i * tileSize + tileSize / 2;
+                    tile.y = this.mapTop * tileSize + tileSize / 2;
+                    this.map.addChild(tile);
+                }
+                this.mapTop++;
+            }
+            if(this.map.y/tileSize - this.mapBottom > -1){
+                for (var i = -this.mapLeft; i < this.mapRight; i++) {
+                    var tile = new cc.Sprite("res/tile" + this.getGIDAt(i, this.mapBottom) + ".png");
+                    tile.x = i * tileSize + tileSize / 2;
+                    tile.y = -this.mapBottom * tileSize + tileSize / 2;
+                    this.map.addChild(tile);
+                }
+                this.mapBottom++;
+            }
+        }
     }
 });
 
+
 var GameScene = cc.Scene.extend({
-    onEnter:function () {
+    onEnter: function () {
         this._super();
-//        var layer = new ParallaxLayer();
-        var layer = new UnlimitedParallaxLayer();
+//        var layer = new TiledMapLayer();
+        var layer = new UnlimitedTiledMapLayer();
         this.addChild(layer);
     }
 });

@@ -1,7 +1,6 @@
 
 var g_resources = [
-    "res/bgLayer.jpg",
-    "res/bgLayer2.png",
-    "res/bgLayer3.png",
-    "res/bgLayer4.png"
+    "res/tile0.png",
+    "res/map.tmx",
+    "res/tmw_desert_spacing.png"
 ];
