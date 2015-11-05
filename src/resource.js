@@ -1,8 +1,10 @@
 
 var g_resources = [
-    "res/font.fnt",
-    "res/font_0.png",
-    "res/bm.fnt",
-    "res/bm_0.png"
+    "res/star.png",
+    "res/firework.png",
+    "res/snow.png",
+    "res/texture.png",
+    "res/particle.plist",
+    "res/fire.png"
 ];
 
